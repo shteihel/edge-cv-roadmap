@@ -2,6 +2,7 @@ import time
 import argparse
 import csv
 import sys
+import psutil
 from datetime import datetime
 
 # --- ЧАСТЬ 1: ФУНКЦИЯ ПОЛУЧЕНИЯ ТЕМПЕРАТУРЫ ---
@@ -17,15 +18,16 @@ def get_cpu_temp() -> float:
         return 0.0
 
 # --- ЧАСТЬ 2: ФУНКЦИЯ ЗАПИСИ В CSV ---
-def write_to_csv(filename: str, temp: float):
+def write_to_csv(filename: str, temp: float, ram:float):
     # Получаем текущее время (год-месяц-день час:минута:секунда)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ram = psutil.virtual_memory().percent
     
     # Открываем файл. Режим 'a' (append) значит "дописать в конец", а не стирать.
     # newline='' нужен, чтобы в CSV не было пустых строк между данными
     with open(filename, 'a', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow([now, temp]) # Записываем список: [время, температура]
+        writer.writerow([now, temp, ram]) # Записываем список: [время, температура]
 
 # --- ЧАСТЬ 3: ГЛАВНЫЙ БЛОК УПРАВЛЕНИЯ ---
 def main():
@@ -52,8 +54,10 @@ def main():
     try:
         while True:
             t = get_cpu_temp()              # 1. Узнали температуру
+            ram = psutil.virtual_memory().percent
             print(f"Текущая t: {t}°C")      # 2. Показали на экране
-            write_to_csv(args.filename, t)  # 3. Записали в книгу
+            print(f'Текущая загрузка RAM: {ram}%')
+            write_to_csv(args.filename, t, ram)  # 3. Записали в книгу
             time.sleep(args.interval)       # 4. Уснули на N секунд
             
     except KeyboardInterrupt:
